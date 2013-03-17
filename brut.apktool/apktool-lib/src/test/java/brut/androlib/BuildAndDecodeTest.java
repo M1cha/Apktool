@@ -185,6 +185,7 @@ public class BuildAndDecodeTest {
 		tmp.put("injectOriginal", false);
 		tmp.put("framework", false);
 		tmp.put("update", false);
+		tmp.put("copyOriginal", false);
 
 		return tmp;
 	}

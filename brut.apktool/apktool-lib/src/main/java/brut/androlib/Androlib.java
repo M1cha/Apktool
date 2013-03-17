@@ -129,6 +129,27 @@ public class Androlib {
 		}
 	}
 
+	public void writeOriginalFiles(ExtFile apkFile, File outDir)
+			throws AndrolibException {
+		LOGGER.info("Copying original files...");
+		File originalDir = new File(outDir, "original");
+		if (!originalDir.exists()) {
+			originalDir.mkdirs();
+		}
+
+		try {
+			Directory in = apkFile.getDirectory();
+			if(in.containsFile("AndroidManifest.xml")) {
+				in.copyToDir(originalDir, "AndroidManifest.xml");
+			}
+			if (in.containsDir("META-INF")) {
+				in.copyToDir(originalDir, "META-INF");
+			}
+		} catch (DirectoryException ex) {
+			throw new AndrolibException(ex);
+		}
+	}
+
 	public void writeMetaFile(File mOutDir, Map<String, Object> meta)
 			throws AndrolibException {
 		DumperOptions options = new DumperOptions();
@@ -209,6 +230,7 @@ public class Androlib {
 		buildResources(appDir, flags,
 				(Map<String, Object>) meta.get("usesFramework"));
 		buildLib(appDir, flags);
+		buildCopyOriginalFiles(appDir, flags);
 		buildApk(appDir, outFile, flags);
 	}
 
@@ -433,6 +455,29 @@ public class Androlib {
 		}
 	}
 
+	public void buildCopyOriginalFiles(File appDir,
+			HashMap<String, Boolean> flags) throws AndrolibException {
+		if (flags.get("copyOriginal")) {
+			File originalDir = new File(appDir, "original");
+			if(originalDir.exists()) {
+				try {
+					LOGGER.info("Copy original files...");
+					Directory in = (new ExtFile(originalDir)).getDirectory();
+					if(in.containsFile("AndroidManifest.xml")) {
+						LOGGER.info("Copy AndroidManifest.xml...");
+						in.copyToDir(new File(appDir, APK_DIRNAME), "AndroidManifest.xml");
+					}
+					if (in.containsDir("META-INF")) {
+						LOGGER.info("Copy META-INF...");
+						in.copyToDir(new File(appDir, APK_DIRNAME), "META-INF");
+					}
+				} catch (DirectoryException ex) {
+					throw new AndrolibException(ex);
+				}
+			}
+		}
+	}
+
 	public void buildApk(File appDir, File outApk,
 			HashMap<String, Boolean> flags) throws AndrolibException {
 		LOGGER.info("Building apk file...");
@@ -457,6 +502,7 @@ public class Androlib {
 		if (flags.get("injectOriginal")) {
 			LOGGER.info("Injecting contents isn't ready yet. Sorry :(");
 		}
+
 	}
 
 	public void publicizeResources(File arscFile) throws AndrolibException {
